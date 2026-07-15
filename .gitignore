@@ -1,0 +1,34 @@
+# Binaries
+/bin/
+/kubelens
+*.exe
+
+# Test and coverage output
+*.test
+coverage.out
+coverage.html
+
+# Runtime data — the incident store is per-machine state, never source.
+*.db
+*.db-shm
+*.db-wal
+kubelens.db
+
+# Generated eval output. These names must match what the Makefile actually
+# writes, or the artifacts end up committed.
+eval.json
+eval.md
+
+# Frontend
+web/node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts
+web/.eslintcache
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+.claude/
