@@ -144,9 +144,17 @@ func (w *ClusterWatcher) Run(ctx context.Context, out chan<- WatchEvent) error {
 	// the cluster being replayed as if it just happened.
 	for _, factory := range factories {
 		for informerType, synced := range factory.WaitForCacheSync(ctx.Done()) {
-			if !synced {
-				return fmt.Errorf("informer cache for %v failed to sync", informerType)
+			if synced {
+				continue
 			}
+			// WaitForCacheSync also reports false when the context is
+			// cancelled. Shutting down cleanly is not a sync failure, and
+			// reporting it as one puts a scary error in the log of every
+			// normal exit.
+			if err := ctx.Err(); err != nil {
+				return nil
+			}
+			return fmt.Errorf("informer cache for %v failed to sync", informerType)
 		}
 	}
 
