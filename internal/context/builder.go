@@ -144,7 +144,12 @@ func (b *Builder) Build(ctx context.Context, incident detector.Incident, event w
 	}
 
 	if b.logs != nil && strings.HasPrefix(incident.Resource, "pod/") {
-		raw, err := b.logs.Fetch(ctx, incident.Namespace, podName, incident.Container, b.opts.LogLines)
+		// One more line than the budget is requested so the builder can tell
+		// "this is all the output there was" from "this is the tail of more".
+		// Whether evidence was dropped is something the reader needs to know:
+		// the absence of a line is otherwise indistinguishable from proof that
+		// it never happened.
+		raw, err := b.logs.Fetch(ctx, incident.Namespace, podName, incident.Container, b.opts.LogLines+1)
 		if err == nil {
 			out.Logs, out.Truncated = numberLines(raw, b.opts.LogLines)
 		}
