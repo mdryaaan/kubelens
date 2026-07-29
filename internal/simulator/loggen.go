@@ -35,7 +35,7 @@ func healthyLines(rng *rand.Rand, w workload, at time.Time) []string {
 	case runtimeNode:
 		return []string{
 			fmt.Sprintf("%s info: %s listening on :8080", stamp(120), w.name),
-			fmt.Sprintf("%s info: GET /healthz 200 1.4ms", stamp(90), w.name),
+			fmt.Sprintf("%s info: GET /healthz 200 1.4ms", stamp(90)),
 			fmt.Sprintf("%s info: cache warm complete (%d keys)", stamp(60), 1200+rng.Intn(800)),
 		}
 	case runtimeGo:
