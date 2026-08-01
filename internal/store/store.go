@@ -92,6 +92,10 @@ type Store interface {
 // cannot ask for a million rows.
 const DefaultLimit = 100
 
+// NormalisedLimit is the limit this filter will actually use, so a response can
+// report the page size it applied rather than the one that was asked for.
+func (f Filter) NormalisedLimit() int { return f.normalise().Limit }
+
 // normalise applies the defaults a caller left unset.
 func (f Filter) normalise() Filter {
 	if f.Limit <= 0 || f.Limit > 1000 {
