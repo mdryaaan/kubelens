@@ -71,6 +71,15 @@ Evidence you may cite from — nothing outside this block exists:
 Respond with exactly this JSON shape:
 %s`
 
+// UnknownCategory is what BuildPrompt shows when the caller has not run a rule
+// first.
+//
+// The eval harness uses this: measuring a model against a corpus while handing
+// it the right answer in the prompt would measure nothing but its ability to
+// copy. Everywhere else the rule's category is given, because the rule read the
+// container's actual status and the model should not have to guess at it.
+const UnknownCategory = "(not determined — you must classify from the evidence alone)"
+
 // BuildPrompt renders the full user prompt for a request.
 func BuildPrompt(req Request) string {
 	container := ""
@@ -83,8 +92,13 @@ func BuildPrompt(req Request) string {
 		evidence = "(no evidence was available)"
 	}
 
+	category := req.Category
+	if strings.TrimSpace(category) == "" {
+		category = UnknownCategory
+	}
+
 	return fmt.Sprintf(userPromptTemplate,
-		req.Category, req.Namespace, req.Resource, container, evidence, SchemaJSON)
+		category, req.Namespace, req.Resource, container, evidence, SchemaJSON)
 }
 
 // RepairPrompt is appended on the single retry after a malformed response. It
