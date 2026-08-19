@@ -1,0 +1,10 @@
+2026-08-19T11:02:44.001Z info: checkout-api listening on :8080
+2026-08-19T11:31:10.774Z warn: rss 361MB approaching container limit 384Mi
+2026-08-19T11:31:44.219Z warn: event loop lag 812ms
+<--- Last few GCs --->
+[1:0x5a2f110]   112934 ms: Mark-sweep 361.4 (378.2) -> 360.9 (378.4) MB, 984.2 / 0.0 ms  (average mu = 0.104, current mu = 0.031) allocation failure; scavenge might not succeed
+<--- JS stacktrace --->
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+ 1: 0xb7a3f0 node::Abort() [node]
+ 2: 0xa8b7f5 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+ 3: 0xd5a3b0 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]

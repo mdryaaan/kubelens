@@ -1,0 +1,10 @@
+2026-08-19T02:00:01.004Z level=info msg="report run started" report=quarterly-revenue rows=54000000
+2026-08-19T02:03:19.882Z level=warn msg="memory pressure" heap_alloc_mb=968 limit=1Gi
+2026-08-19T02:03:51.117Z level=warn msg="gc pause" pause_ms=412 heap_alloc_mb=1010
+fatal error: runtime: out of memory
+
+runtime stack:
+runtime.throw({0x8f2a11?, 0x40000000?})
+	/usr/local/go/src/runtime/panic.go:1023 +0x5c
+runtime.sysMapOS(0xc000000000, 0x40000000)
+	/usr/local/go/src/runtime/mem_linux.go:187 +0x11b

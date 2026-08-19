@@ -1,0 +1,5 @@
+2026-08-19T12:40:02.114Z level=info msg="request served" path=/healthz status=200 dur=4ms
+2026-08-19T12:44:19.771Z level=warn msg="upstream slow" dep=postgres p99_ms=1840
+2026-08-19T12:45:02.118Z level=warn msg="healthz exceeded budget" dur_ms=1204 budget_ms=1000
+2026-08-19T12:45:22.554Z level=error msg="connection pool exhausted" in_use=20 max=20
+2026-08-19T12:45:42.881Z level=warn msg="healthz exceeded budget" dur_ms=1911 budget_ms=1000

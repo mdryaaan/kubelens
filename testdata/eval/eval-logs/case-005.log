@@ -1,0 +1,5 @@
+2026-08-19T15:20:11.441Z level=info msg="log shipper started" buffer_mb=64
+2026-08-19T15:44:02.119Z level=warn msg="upstream backpressure, buffering" pending_batches=812
+2026-08-19T15:47:33.902Z level=warn msg="buffer at capacity" buffered_mb=127 limit_mb=128
+2026-08-19T15:47:51.008Z level=error msg="allocation failed while flushing"
+fatal error: runtime: out of memory

@@ -1,0 +1,10 @@
+2026-08-19T13:41:02.881Z level=info msg="loading configuration" path=/etc/relay/config.yaml
+2026-08-19T13:41:02.902Z level=info msg="no smtp block found, using defaults"
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x71a3c2]
+
+goroutine 1 [running]:
+main.(*relayServer).Start(0x0)
+	/build/cmd/notification-relay/main.go:84 +0x1c
+main.main()
+	/build/cmd/notification-relay/main.go:41 +0xd8

@@ -1,0 +1,5 @@
+2026-08-19T14:02:11.004Z info: auth-service listening on :8080
+2026-08-19T14:31:02.881Z warn: redis connection lost, entering degraded mode
+2026-08-19T14:31:03.114Z info: GET /healthz 503 0.8ms reason=redis_unavailable
+2026-08-19T14:31:13.118Z info: GET /healthz 503 0.7ms reason=redis_unavailable
+2026-08-19T14:31:23.221Z info: GET /healthz 503 0.9ms reason=redis_unavailable

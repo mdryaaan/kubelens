@@ -1,0 +1,7 @@
+2026-08-19T08:00:12.114Z  INFO 1 --- [main] c.a.ledger.Application : Starting Application v2.1.0
+2026-08-19T08:00:14.882Z ERROR 1 --- [main] o.s.b.SpringApplication : Application run failed
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataSource'
+Caused by: org.postgresql.util.PSQLException: FATAL: password authentication failed for user "ledger_app"
+	at org.postgresql.core.v3.ConnectionFactoryImpl.doAuthentication(ConnectionFactoryImpl.java:693)
+	at com.acme.ledger.config.DataSourceConfig.dataSource(DataSourceConfig.java:47)
+Error starting ApplicationContext. To display the condition evaluation report re-run with 'debug' enabled.

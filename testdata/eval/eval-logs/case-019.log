@@ -1,0 +1,2 @@
+2026-08-19T16:10:00.114Z level=info msg="server started" addr=:8080 service=notification-relay
+2026-08-19T16:10:30.882Z level=info msg="request served" path=/metrics status=200 dur=1ms

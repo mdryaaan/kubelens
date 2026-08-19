@@ -1,0 +1,10 @@
+2026-08-19T09:14:02.118Z  INFO 1 --- [main] c.a.payments.Application : Started Application in 9.31 seconds
+2026-08-19T09:14:11.402Z  INFO 1 --- [scheduling-1] c.a.payments.CacheWarmer : warming merchant cache
+2026-08-19T09:14:41.887Z  WARN 1 --- [scheduling-1] c.a.payments.CacheWarmer : heap usage 88% of 512Mi
+2026-08-19T09:15:02.113Z  WARN 1 --- [scheduling-1] c.a.payments.CacheWarmer : GC overhead 74%, 11 full collections in 30s
+2026-08-19T09:15:19.556Z ERROR 1 --- [http-nio-8080-exec-4] o.a.c.c.C.[.[.[/] : Servlet.service() threw exception
+java.lang.OutOfMemoryError: Java heap space
+	at java.base/java.util.Arrays.copyOf(Arrays.java:3537)
+	at com.acme.payments.CacheWarmer.loadAll(CacheWarmer.java:64)
+	at com.acme.payments.CacheWarmer.refresh(CacheWarmer.java:31)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)

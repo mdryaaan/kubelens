@@ -1,0 +1,9 @@
+2026-08-19T17:22:10.004Z info: search-api booting
+2026-08-19T17:22:10.882Z info: connecting to elasticsearch at http://es.shop.svc:9200
+/app/node_modules/@elastic/transport/lib/Transport.js:512
+            throw new ConnectionError('getaddrinfo ENOTFOUND es.shop.svc')
+            ^
+ConnectionError: getaddrinfo ENOTFOUND es.shop.svc
+    at Transport.request (/app/node_modules/@elastic/transport/lib/Transport.js:512:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Node.js v20.11.0

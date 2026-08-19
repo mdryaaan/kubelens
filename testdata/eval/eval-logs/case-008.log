@@ -1,0 +1,7 @@
+2026-08-19T06:11:44.001Z [INFO] pricing-worker starting up (pid 1)
+Traceback (most recent call last):
+  File "/app/pricing_worker/__main__.py", line 41, in <module>
+    main()
+  File "/app/pricing_worker/config.py", line 18, in load
+    raise KeyError(f"missing required setting: {name}")
+KeyError: 'missing required setting: REDIS_URL'

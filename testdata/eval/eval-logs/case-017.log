@@ -1,0 +1,3 @@
+2026-08-19T07:00:01.114Z  INFO 1 --- [main] c.a.payments.Application : Starting Application v1.4.2
+2026-08-19T07:00:09.882Z  INFO 1 --- [main] c.a.payments.MigrationRunner : applying 14 pending migrations
+2026-08-19T07:00:24.117Z  INFO 1 --- [main] c.a.payments.MigrationRunner : migration 9 of 14

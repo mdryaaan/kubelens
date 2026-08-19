@@ -1,0 +1,10 @@
+2026-08-19T04:12:00.221Z [INFO] catalog-indexer starting up (pid 1)
+2026-08-19T04:12:03.887Z [INFO] connected to postgres at db.shop.svc.cluster.local:5432
+2026-08-19T04:14:41.002Z [INFO] fetched 54,102,884 product rows in 158s
+2026-08-19T04:14:41.118Z [WARNING] resident set size 1987MB of 2Gi limit
+Traceback (most recent call last):
+  File "/app/catalog_indexer/__main__.py", line 88, in <module>
+    build_index(rows)
+  File "/app/catalog_indexer/indexer.py", line 212, in build_index
+    frame = pandas.concat(chunks, ignore_index=True)
+MemoryError: Unable to allocate 412. MiB for an array with shape (54102884,) and data type float64

@@ -1,0 +1,5 @@
+2026-08-19T10:02:00.114Z level=info msg="running migrations" target=head
+2026-08-19T10:02:00.882Z level=info msg="acquiring advisory lock" key=72119
+2026-08-19T10:02:30.901Z level=error msg="could not acquire migration lock after 30s"
+2026-08-19T10:02:30.902Z level=error msg="another migration is already running" holder=auth-migrator-8b3c1-kk22z
+exit status 1

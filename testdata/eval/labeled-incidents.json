@@ -1,0 +1,494 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case-001",
+      "description": "JVM heap exhausted during cache warm-up",
+      "category": "OOMKilled",
+      "namespace": "payments",
+      "resource": "pod/payment-api-7d9f4-x2k1m",
+      "container": "api",
+      "log_file": "eval-logs/case-001.log",
+      "events": [
+        "Warning OOMKilling: Memory cgroup out of memory: Killed process 1 (java) total-vm:2841232kB, anon-rss:521944kB",
+        "Warning BackOff: Back-off restarting failed container api in pod payment-api-7d9f4-x2k1m_payments"
+      ],
+      "spec": {
+        "memory limit": "512Mi",
+        "memory request": "256Mi",
+        "image": "ghcr.io/acme/payment-api:1.4.2"
+      }
+    },
+    {
+      "id": "case-002",
+      "description": "Node.js heap limit reached under load",
+      "category": "OOMKilled",
+      "namespace": "shop",
+      "resource": "pod/checkout-api-5b2c8-qq47t",
+      "container": "api",
+      "log_file": "eval-logs/case-002.log",
+      "events": [
+        "Warning OOMKilling: Memory cgroup out of memory: Killed process 1 (node)",
+        "Normal Pulled: Container image \"ghcr.io/acme/checkout-api:5.2.1\" already present on machine"
+      ],
+      "spec": {
+        "memory limit": "384Mi",
+        "image": "ghcr.io/acme/checkout-api:5.2.1"
+      }
+    },
+    {
+      "id": "case-003",
+      "description": "Go service killed while buffering a large response",
+      "category": "OOMKilled",
+      "namespace": "platform",
+      "resource": "pod/report-builder-3a91f-mn82p",
+      "container": "builder",
+      "log_file": "eval-logs/case-003.log",
+      "events": [
+        "Warning OOMKilling: Memory cgroup out of memory: Killed process 1 (report-builde)"
+      ],
+      "spec": {
+        "memory limit": "1Gi",
+        "memory request": "512Mi",
+        "image": "ghcr.io/acme/report-builder:4.0.0"
+      }
+    },
+    {
+      "id": "case-004",
+      "description": "Python indexer exceeded limit allocating a dataframe",
+      "category": "OOMKilled",
+      "namespace": "shop",
+      "resource": "pod/catalog-indexer-9f2d1-tt903",
+      "container": "indexer",
+      "log_file": "eval-logs/case-004.log",
+      "events": [
+        "Warning OOMKilling: Memory cgroup out of memory: Killed process 1 (python3)"
+      ],
+      "spec": {
+        "memory limit": "2Gi",
+        "image": "ghcr.io/acme/catalog-indexer:0.9.4"
+      }
+    },
+    {
+      "id": "case-005",
+      "description": "Sidecar killed, main container unaffected",
+      "category": "OOMKilled",
+      "namespace": "auth",
+      "resource": "pod/auth-service-2c7ab-lk44w",
+      "container": "log-shipper",
+      "log_file": "eval-logs/case-005.log",
+      "events": [
+        "Warning OOMKilling: Memory cgroup out of memory: Killed process 4213 (log-shipper) total-vm:412992kB, anon-rss:131048kB",
+        "Warning BackOff: Back-off restarting failed container log-shipper in pod auth-service-2c7ab-lk44w_auth"
+      ],
+      "spec": {
+        "memory limit": "128Mi",
+        "image": "ghcr.io/acme/log-shipper:2.4.1"
+      }
+    },
+    {
+      "id": "case-006",
+      "description": "Database credentials rejected at startup",
+      "category": "CrashLoopBackOff",
+      "namespace": "payments",
+      "resource": "pod/ledger-worker-4e8b2-vv18d",
+      "container": "worker",
+      "log_file": "eval-logs/case-006.log",
+      "events": [
+        "Warning BackOff: Back-off restarting failed container worker in pod ledger-worker-4e8b2-vv18d_payments",
+        "Normal Started: Started container worker"
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/ledger-worker:2.1.0",
+        "restart policy": "Always"
+      }
+    },
+    {
+      "id": "case-007",
+      "description": "Go binary panics on a nil pointer during boot",
+      "category": "CrashLoopBackOff",
+      "namespace": "platform",
+      "resource": "pod/notification-relay-7c1e9-bb22x",
+      "container": "relay",
+      "log_file": "eval-logs/case-007.log",
+      "events": [
+        "Warning BackOff: Back-off restarting failed container relay in pod notification-relay-7c1e9-bb22x_platform"
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/notification-relay:1.1.3"
+      }
+    },
+    {
+      "id": "case-008",
+      "description": "Missing required environment variable",
+      "category": "CrashLoopBackOff",
+      "namespace": "shop",
+      "resource": "pod/pricing-worker-1a4f7-zz09q",
+      "container": "worker",
+      "log_file": "eval-logs/case-008.log",
+      "events": [
+        "Warning BackOff: Back-off restarting failed container worker in pod pricing-worker-1a4f7-zz09q_shop",
+        "Normal Created: Created container worker"
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/pricing-worker:1.0.9"
+      }
+    },
+    {
+      "id": "case-009",
+      "description": "Migration lock held by another instance",
+      "category": "CrashLoopBackOff",
+      "namespace": "auth",
+      "resource": "pod/auth-migrator-8b3c1-pp71n",
+      "container": "migrator",
+      "log_file": "eval-logs/case-009.log",
+      "events": [
+        "Warning BackOff: Back-off restarting failed container migrator in pod auth-migrator-8b3c1-pp71n_auth"
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/auth-migrator:3.0.7",
+        "restart policy": "Always"
+      }
+    },
+    {
+      "id": "case-010",
+      "description": "Node process exits on an unhandled rejection",
+      "category": "CrashLoopBackOff",
+      "namespace": "shop",
+      "resource": "pod/search-api-6d2f8-hh31k",
+      "container": "api",
+      "log_file": "eval-logs/case-010.log",
+      "events": [
+        "Warning BackOff: Back-off restarting failed container api in pod search-api-6d2f8-hh31k_shop"
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/search-api:2.8.0"
+      }
+    },
+    {
+      "id": "case-011",
+      "description": "Image tag does not exist in the registry",
+      "category": "ImagePullBackOff",
+      "namespace": "payments",
+      "resource": "pod/payment-api-9a2c4-rr88w",
+      "container": "api",
+      "events": [
+        "Normal Pulling: Pulling image \"ghcr.io/acme/payment-api:1.4.3-hotfix\"",
+        "Warning Failed: Failed to pull image \"ghcr.io/acme/payment-api:1.4.3-hotfix\": rpc error: code = NotFound desc = failed to pull and unpack image: not found: manifest unknown",
+        "Warning Failed: Error: ErrImagePull for container api",
+        "Warning Failed: Error: ImagePullBackOff, Back-off pulling image \"ghcr.io/acme/payment-api:1.4.3-hotfix\""
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/payment-api:1.4.3-hotfix"
+      }
+    },
+    {
+      "id": "case-012",
+      "description": "Private registry rejects the pull secret",
+      "category": "ImagePullBackOff",
+      "namespace": "auth",
+      "resource": "pod/auth-service-4d1a7-cc90v",
+      "container": "auth",
+      "events": [
+        "Normal Pulling: Pulling image \"registry.internal.acme.com/auth-service:3.1.0\"",
+        "Warning Failed: Failed to pull image \"registry.internal.acme.com/auth-service:3.1.0\": rpc error: code = Unknown desc = failed to authorize: failed to fetch anonymous token: unexpected status: 401 Unauthorized",
+        "Warning Failed: Error: ErrImagePull for container auth"
+      ],
+      "spec": {
+        "image": "registry.internal.acme.com/auth-service:3.1.0"
+      }
+    },
+    {
+      "id": "case-013",
+      "description": "Registry host unresolvable from the node",
+      "category": "ImagePullBackOff",
+      "namespace": "platform",
+      "resource": "pod/metrics-agent-2f8b3-dd12l",
+      "container": "agent",
+      "events": [
+        "Normal Pulling: Pulling image \"quay-mirror.acme.internal/metrics-agent:0.14.2\"",
+        "Warning Failed: Failed to pull image \"quay-mirror.acme.internal/metrics-agent:0.14.2\": rpc error: code = Unknown desc = failed to resolve reference: dial tcp: lookup quay-mirror.acme.internal on 10.96.0.10:53: no such host",
+        "Warning Failed: Error: ImagePullBackOff"
+      ],
+      "spec": {
+        "image": "quay-mirror.acme.internal/metrics-agent:0.14.2"
+      }
+    },
+    {
+      "id": "case-014",
+      "description": "Malformed image reference",
+      "category": "ImagePullBackOff",
+      "namespace": "shop",
+      "resource": "pod/catalog-indexer-1c9e2-ss41t",
+      "container": "indexer",
+      "events": [
+        "Warning InspectFailed: Failed to apply default image tag \"ghcr.io/acme/catalog-indexer:0.9.4:latest\": couldn't parse image reference \"ghcr.io/acme/catalog-indexer:0.9.4:latest\": invalid reference format",
+        "Warning Failed: Error: InvalidImageName"
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/catalog-indexer:0.9.4:latest"
+      }
+    },
+    {
+      "id": "case-015",
+      "description": "Registry rate limit reached",
+      "category": "ImagePullBackOff",
+      "namespace": "platform",
+      "resource": "pod/report-builder-5e7d9-ww23m",
+      "container": "builder",
+      "events": [
+        "Normal Pulling: Pulling image \"docker.io/library/python:3.12-slim\"",
+        "Warning Failed: Failed to pull image \"docker.io/library/python:3.12-slim\": rpc error: code = Unknown desc = failed to pull and unpack image: toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading",
+        "Warning Failed: Error: ImagePullBackOff, Back-off pulling image \"docker.io/library/python:3.12-slim\""
+      ],
+      "spec": {
+        "image": "docker.io/library/python:3.12-slim"
+      }
+    },
+    {
+      "id": "case-016",
+      "description": "Readiness probe times out under database pressure",
+      "category": "ProbeFailure",
+      "namespace": "shop",
+      "resource": "pod/checkout-api-5b2c8-nn77p",
+      "container": "api",
+      "log_file": "eval-logs/case-016.log",
+      "events": [
+        "Warning Unhealthy: Readiness probe failed: Get \"http://10.244.2.41:8080/healthz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+        "Warning Unhealthy: Readiness probe failed: Get \"http://10.244.2.41:8080/healthz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)",
+        "Warning Unhealthy: Readiness probe failed: Get \"http://10.244.2.41:8080/healthz\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)"
+      ],
+      "spec": {
+        "readiness probe": "HTTP GET /healthz:8080 (initialDelay=5s period=10s timeout=1s failureThreshold=3)",
+        "image": "ghcr.io/acme/checkout-api:5.2.1"
+      }
+    },
+    {
+      "id": "case-017",
+      "description": "Liveness probe restarts a container that is merely slow to start",
+      "category": "ProbeFailure",
+      "namespace": "payments",
+      "resource": "pod/payment-api-7d9f4-gg22b",
+      "container": "api",
+      "log_file": "eval-logs/case-017.log",
+      "events": [
+        "Warning Unhealthy: Liveness probe failed: Get \"http://10.244.1.88:8080/livez\": dial tcp 10.244.1.88:8080: connect: connection refused",
+        "Warning Unhealthy: Liveness probe failed: Get \"http://10.244.1.88:8080/livez\": dial tcp 10.244.1.88:8080: connect: connection refused",
+        "Normal Killing: Container api failed liveness probe, will be restarted",
+        "Warning Unhealthy: Liveness probe failed: Get \"http://10.244.1.88:8080/livez\": dial tcp 10.244.1.88:8080: connect: connection refused"
+      ],
+      "spec": {
+        "liveness probe": "HTTP GET /livez:8080 (initialDelay=15s period=20s timeout=2s failureThreshold=3)",
+        "image": "ghcr.io/acme/payment-api:1.4.2"
+      }
+    },
+    {
+      "id": "case-018",
+      "description": "Readiness probe returns 503 while a dependency is down",
+      "category": "ProbeFailure",
+      "namespace": "auth",
+      "resource": "pod/auth-service-2c7ab-jj55c",
+      "container": "auth",
+      "log_file": "eval-logs/case-018.log",
+      "events": [
+        "Warning Unhealthy: Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "Warning Unhealthy: Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "Warning Unhealthy: Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "Warning Unhealthy: Readiness probe failed: HTTP probe failed with statuscode: 503"
+      ],
+      "spec": {
+        "readiness probe": "HTTP GET /healthz:8080 (initialDelay=5s period=10s timeout=1s failureThreshold=3)",
+        "image": "ghcr.io/acme/auth-service:3.0.7"
+      }
+    },
+    {
+      "id": "case-019",
+      "description": "Exec probe fails because the binary is missing from a slim image",
+      "category": "ProbeFailure",
+      "namespace": "platform",
+      "resource": "pod/notification-relay-7c1e9-ww81f",
+      "container": "relay",
+      "log_file": "eval-logs/case-019.log",
+      "events": [
+        "Warning Unhealthy: Readiness probe failed: OCI runtime exec failed: exec failed: unable to start container process: exec: \"curl\": executable file not found in $PATH: unknown",
+        "Warning Unhealthy: Readiness probe failed: OCI runtime exec failed: exec failed: unable to start container process: exec: \"curl\": executable file not found in $PATH: unknown",
+        "Warning Unhealthy: Readiness probe failed: OCI runtime exec failed: exec failed: unable to start container process: exec: \"curl\": executable file not found in $PATH: unknown"
+      ],
+      "spec": {
+        "readiness probe": "exec curl -f http://localhost:8080/healthz (initialDelay=5s period=10s timeout=1s failureThreshold=3)",
+        "image": "ghcr.io/acme/notification-relay:1.1.3"
+      }
+    },
+    {
+      "id": "case-020",
+      "description": "Probe port does not match the container port",
+      "category": "ProbeFailure",
+      "namespace": "shop",
+      "resource": "pod/search-api-6d2f8-uu09r",
+      "container": "api",
+      "log_file": "eval-logs/case-020.log",
+      "events": [
+        "Warning Unhealthy: Readiness probe failed: Get \"http://10.244.3.19:8080/healthz\": dial tcp 10.244.3.19:8080: connect: connection refused",
+        "Warning Unhealthy: Readiness probe failed: Get \"http://10.244.3.19:8080/healthz\": dial tcp 10.244.3.19:8080: connect: connection refused",
+        "Warning Unhealthy: Readiness probe failed: Get \"http://10.244.3.19:8080/healthz\": dial tcp 10.244.3.19:8080: connect: connection refused"
+      ],
+      "spec": {
+        "readiness probe": "HTTP GET /healthz:8080 (initialDelay=5s period=10s timeout=1s failureThreshold=3)",
+        "image": "ghcr.io/acme/search-api:2.8.0"
+      }
+    },
+    {
+      "id": "case-021",
+      "description": "No node has enough CPU for the request",
+      "category": "PendingTimeout",
+      "namespace": "platform",
+      "resource": "pod/report-builder-3a91f-qq02d",
+      "container": "builder",
+      "events": [
+        "Warning FailedScheduling: 0/4 nodes are available: 4 Insufficient cpu. preemption: 0/4 nodes are available: 4 No preemption victims found for incoming pod.",
+        "Warning FailedScheduling: 0/4 nodes are available: 4 Insufficient cpu. preemption: 0/4 nodes are available: 4 No preemption victims found for incoming pod."
+      ],
+      "spec": {
+        "cpu request": "3",
+        "memory request": "512Mi",
+        "image": "ghcr.io/acme/report-builder:4.0.0"
+      }
+    },
+    {
+      "id": "case-022",
+      "description": "Node selector matches no node",
+      "category": "PendingTimeout",
+      "namespace": "shop",
+      "resource": "pod/catalog-indexer-9f2d1-ee19s",
+      "container": "indexer",
+      "events": [
+        "Warning FailedScheduling: 0/4 nodes are available: 4 node(s) didn't match Pod's node affinity/selector."
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/catalog-indexer:0.9.4",
+        "node selector": "gpu=true"
+      }
+    },
+    {
+      "id": "case-023",
+      "description": "PersistentVolumeClaim never binds",
+      "category": "PendingTimeout",
+      "namespace": "payments",
+      "resource": "pod/ledger-archiver-4b81c-hh37g",
+      "container": "archiver",
+      "events": [
+        "Warning FailedScheduling: 0/4 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/4 nodes are available: 4 Preemption is not helpful for scheduling.",
+        "Normal WaitForFirstConsumer: waiting for first consumer to be created before binding"
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/ledger-archiver:1.2.0",
+        "volume claim": "ledger-archive-pvc"
+      }
+    },
+    {
+      "id": "case-024",
+      "description": "Every node carries a taint the pod does not tolerate",
+      "category": "PendingTimeout",
+      "namespace": "auth",
+      "resource": "pod/auth-service-2c7ab-oo55h",
+      "container": "auth",
+      "events": [
+        "Warning FailedScheduling: 0/4 nodes are available: 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }, 3 node(s) had untolerated taint {workload: batch}. preemption: 0/4 nodes are available."
+      ],
+      "spec": {
+        "image": "ghcr.io/acme/auth-service:3.0.7"
+      }
+    },
+    {
+      "id": "case-025",
+      "description": "Memory request exceeds any single node's capacity",
+      "category": "PendingTimeout",
+      "namespace": "shop",
+      "resource": "pod/catalog-indexer-9f2d1-pp88j",
+      "container": "indexer",
+      "events": [
+        "Warning FailedScheduling: 0/4 nodes are available: 4 Insufficient memory. preemption: 0/4 nodes are available: 4 No preemption victims found for incoming pod."
+      ],
+      "spec": {
+        "memory request": "64Gi",
+        "memory limit": "64Gi",
+        "image": "ghcr.io/acme/catalog-indexer:0.9.4"
+      }
+    },
+    {
+      "id": "case-026",
+      "description": "Rollout deadline exceeded because new pods never became ready",
+      "category": "DeploymentFailure",
+      "namespace": "payments",
+      "resource": "deployment/payment-api",
+      "events": [
+        "Warning ProgressDeadlineExceeded: ReplicaSet \"payment-api-9a2c4\" has timed out progressing.",
+        "Normal ScalingReplicaSet: Scaled up replica set payment-api-9a2c4 to 2 from 0"
+      ],
+      "spec": {
+        "replicas": "4",
+        "image": "ghcr.io/acme/payment-api:1.5.0"
+      }
+    },
+    {
+      "id": "case-027",
+      "description": "Rollout blocked by a quota that stops new replicas",
+      "category": "DeploymentFailure",
+      "namespace": "shop",
+      "resource": "deployment/checkout-api",
+      "events": [
+        "Warning ProgressDeadlineExceeded: ReplicaSet \"checkout-api-7f31d\" has timed out progressing.",
+        "Warning FailedCreate: (combined from similar events): Error creating: pods \"checkout-api-7f31d-\" is forbidden: exceeded quota: shop-compute, requested: limits.memory=384Mi, used: limits.memory=3840Mi, limited: limits.memory=4Gi"
+      ],
+      "spec": {
+        "replicas": "3",
+        "image": "ghcr.io/acme/checkout-api:5.3.0"
+      }
+    },
+    {
+      "id": "case-028",
+      "description": "Rollout stalled by a bad image in the new ReplicaSet",
+      "category": "DeploymentFailure",
+      "namespace": "auth",
+      "resource": "deployment/auth-service",
+      "events": [
+        "Warning ProgressDeadlineExceeded: ReplicaSet \"auth-service-4d1a7\" has timed out progressing.",
+        "Normal ScalingReplicaSet: Scaled up replica set auth-service-4d1a7 to 1 from 0"
+      ],
+      "spec": {
+        "replicas": "3",
+        "image": "registry.internal.acme.com/auth-service:3.1.0"
+      }
+    },
+    {
+      "id": "case-029",
+      "description": "Rollout deadline exceeded while the previous version still serves",
+      "category": "DeploymentFailure",
+      "namespace": "platform",
+      "resource": "deployment/notification-relay",
+      "events": [
+        "Warning ProgressDeadlineExceeded: ReplicaSet \"notification-relay-8c22a\" has timed out progressing.",
+        "Normal ScalingReplicaSet: Scaled down replica set notification-relay-7c1e9 to 1 from 2"
+      ],
+      "spec": {
+        "replicas": "2",
+        "image": "ghcr.io/acme/notification-relay:1.2.0"
+      }
+    },
+    {
+      "id": "case-030",
+      "description": "Rollout cannot proceed because a PodDisruptionBudget blocks eviction",
+      "category": "DeploymentFailure",
+      "namespace": "payments",
+      "resource": "deployment/ledger-worker",
+      "events": [
+        "Warning ProgressDeadlineExceeded: ReplicaSet \"ledger-worker-6a19e\" has timed out progressing.",
+        "Warning EvictionBlocked: Cannot evict pod as it would violate the pod's disruption budget: ledger-worker-pdb"
+      ],
+      "spec": {
+        "replicas": "2",
+        "image": "ghcr.io/acme/ledger-worker:2.2.0"
+      }
+    }
+  ]
+}
