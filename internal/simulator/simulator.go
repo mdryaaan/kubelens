@@ -184,6 +184,11 @@ func (s *Simulator) InjectNext() []watcher.WatchEvent {
 func (s *Simulator) record(result injection) {
 	if len(result.Logs) > 0 {
 		s.logs.Set(result.LogNamespace, result.LogPod, result.LogContainer, result.Logs)
+	} else if result.LogPod != "" {
+		// The failure produced no output because the container never ran.
+		// Whatever this pod wrote before must go, or the explanation engine is
+		// handed evidence that does not exist.
+		s.logs.Clear(result.LogNamespace, result.LogPod)
 	}
 	if len(result.Records) > 0 && result.EventKey != "" {
 		s.events.Set(result.LogNamespace, result.EventKey, result.Records)

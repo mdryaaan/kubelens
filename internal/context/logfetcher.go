@@ -172,6 +172,24 @@ func (f *MemoryLogFetcher) Set(namespace, pod, container string, lines []string)
 	f.logs[logKey(namespace, pod, container)] = lines
 }
 
+// Clear removes any stored output for a pod.
+//
+// Needed because some failures mean the container never ran: a pod that could
+// not be scheduled, or one whose image never pulled, has no output at all.
+// Leaving earlier lines in place would hand the explanation engine evidence
+// that does not exist in reality.
+func (f *MemoryLogFetcher) Clear(namespace, pod string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	prefix := namespace + "/" + pod + "/"
+	for key := range f.logs {
+		if strings.HasPrefix(key, prefix) {
+			delete(f.logs, key)
+		}
+	}
+}
+
 // Fetch returns the stored output for a container.
 func (f *MemoryLogFetcher) Fetch(_ context.Context, namespace, pod, container string, lines int) ([]string, error) {
 	f.mu.RLock()

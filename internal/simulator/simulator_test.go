@@ -300,3 +300,30 @@ func TestPickPodSkipsAlreadyBrokenPods(t *testing.T) {
 		t.Errorf("picked an already-broken pod: %s", got.Name)
 	}
 }
+
+// A pod that never scheduled, or whose image never pulled, has written nothing.
+// Leaving earlier output in place would hand the explanation engine evidence
+// that does not exist.
+func TestFailuresWithNoOutputClearTheLog(t *testing.T) {
+	for _, category := range []detector.Category{detector.PendingTimeout, detector.ImagePullBackOff} {
+		t.Run(string(category), func(t *testing.T) {
+			sim := New(Options{
+				Seed: 17, Now: func() time.Time { return simClock },
+				Categories: []detector.Category{category},
+			})
+
+			events := sim.InjectNext()
+			if len(events) == 0 {
+				t.Fatal("nothing was injected")
+			}
+			pod := events[0].Pod
+			w, _ := sim.Cluster().Workload(pod.Name)
+
+			lines, err := sim.Logs().Fetch(context.Background(), pod.Namespace, pod.Name, w.container, 50)
+			if err == nil && len(lines) > 0 {
+				t.Errorf("a container that never ran still has %d log lines:\n%s",
+					len(lines), strings.Join(lines, "\n"))
+			}
+		})
+	}
+}
