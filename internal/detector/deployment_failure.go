@@ -60,7 +60,6 @@ func (r *DeploymentFailureRule) Detect(event watcher.WatchEvent) *Incident {
 			deploy.Name, messageOr(progressing.Reason, "unknown"),
 			deploy.Status.ReadyReplicas, desired, deploy.Status.UpdatedReplicas,
 			messageOr(progressing.Message, "no message")),
-		FirstSeen:  progressing.LastTransitionTime.Time,
-		DetectedAt: progressing.LastUpdateTime.Time,
+		FirstSeen: progressing.LastTransitionTime.Time,
 	}
 }

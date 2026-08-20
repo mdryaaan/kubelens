@@ -349,3 +349,46 @@ func TestStats(t *testing.T) {
 		t.Errorf("mean time to detect = %dms, want 90000", stats.MeanTimeToDetectMS)
 	}
 }
+
+// A condition that was already true when kubelens started says nothing about
+// how fast it detects; including it reports the age of the problem as latency.
+func TestStatsExcludesPreExistingFromDetectionLatency(t *testing.T) {
+	store := openTestStore(t)
+	at := time.Now().UTC()
+
+	fresh := sampleRecord("fresh", detector.OOMKilled, at)
+	fresh.Incident.FirstSeen = at.Add(-2 * time.Second)
+
+	inherited := sampleRecord("inherited", detector.CrashLoopBackOff, at)
+	inherited.Incident.FirstSeen = at.Add(-6 * time.Hour)
+	inherited.Incident.PreExisting = true
+
+	for _, record := range []Record{fresh, inherited} {
+		if err := store.SaveIncident(record); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	stats, err := store.Stats(at.Add(-24 * time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if stats.TotalIncidents != 2 {
+		t.Fatalf("total = %d, want both incidents counted", stats.TotalIncidents)
+	}
+	// Only the fresh one contributes: 2 seconds, not the 6-hour average the
+	// inherited condition would produce.
+	if stats.MeanTimeToDetectMS != 2000 {
+		t.Errorf("mean time to detect = %dms, want 2000", stats.MeanTimeToDetectMS)
+	}
+
+	// And the flag has to survive the round trip.
+	back, err := store.Incident("inherited")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !back.Incident.PreExisting {
+		t.Error("the pre-existing flag was lost")
+	}
+}

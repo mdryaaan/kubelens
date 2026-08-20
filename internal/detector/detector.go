@@ -112,6 +112,11 @@ type Incident struct {
 	FirstSeen time.Time `json:"first_seen"`
 	Count     int       `json:"count"`
 	Resolved  bool      `json:"resolved"`
+	// PreExisting marks a condition that was already true when kubelens started
+	// watching. Detection latency is meaningless for those — the delay measures
+	// when the process launched, not how fast it noticed — so they are excluded
+	// from the mean rather than inflating it.
+	PreExisting bool `json:"pre_existing"`
 	// Fingerprint identifies the underlying condition across repeats, so the
 	// same crash loop is one incident with a rising count rather than four
 	// hundred rows.
@@ -170,6 +175,9 @@ type Engine struct {
 
 	mu   sync.Mutex
 	seen map[string]*Incident
+	// startedAt is when this engine began watching, used to tell a condition
+	// kubelens saw begin from one it inherited.
+	startedAt time.Time
 }
 
 // NewEngine builds an engine with the default rule set.
@@ -185,9 +193,10 @@ func NewEngine(opts Options) *Engine {
 	}
 
 	return &Engine{
-		rules: DefaultRules(opts),
-		seen:  make(map[string]*Incident),
-		opts:  opts,
+		rules:     DefaultRules(opts),
+		seen:      make(map[string]*Incident),
+		opts:      opts,
+		startedAt: opts.Now(),
 	}
 }
 
@@ -241,6 +250,9 @@ func (e *Engine) Process(event watcher.WatchEvent) []Incident {
 		}
 		if incident.FirstSeen.IsZero() {
 			incident.FirstSeen = incident.DetectedAt
+		}
+		if incident.FirstSeen.Before(e.startedAt) {
+			incident.PreExisting = true
 		}
 
 		previous, repeat := e.seen[incident.Fingerprint]

@@ -87,6 +87,13 @@ var migrations = []migration{
 			`ALTER TABLE incidents ADD COLUMN evidence TEXT NOT NULL DEFAULT '{}'`,
 		},
 	},
+	{
+		version: 4,
+		name:    "pre-existing conditions excluded from detection latency",
+		stmts: []string{
+			`ALTER TABLE incidents ADD COLUMN pre_existing INTEGER NOT NULL DEFAULT 0`,
+		},
+	},
 }
 
 // migrate applies every migration the database has not yet seen.

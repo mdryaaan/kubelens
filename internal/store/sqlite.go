@@ -81,8 +81,8 @@ func (s *SQLite) SaveIncident(record Record) error {
 	_, err = s.db.Exec(`
 		INSERT INTO incidents (
 			id, fingerprint, category, severity, namespace, resource, container,
-			title, detail, detected_at, first_seen, count, resolved, evidence
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			title, detail, detected_at, first_seen, count, resolved, evidence, pre_existing
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (id) DO UPDATE SET
 			count       = excluded.count,
 			detected_at = excluded.detected_at,
@@ -94,7 +94,8 @@ func (s *SQLite) SaveIncident(record Record) error {
 		incident.Namespace, incident.Resource, incident.Container,
 		incident.Title, incident.Detail,
 		incident.DetectedAt.UTC(), incident.FirstSeen.UTC(),
-		incident.Count, boolToInt(incident.Resolved), string(evidence))
+		incident.Count, boolToInt(incident.Resolved), string(evidence),
+		boolToInt(incident.PreExisting))
 	if err != nil {
 		return fmt.Errorf("saving incident %s: %w", incident.ID, err)
 	}
@@ -145,7 +146,8 @@ func (s *SQLite) SaveExplanation(exp explanation.Explanation) error {
 
 const incidentColumns = `
 	i.id, i.fingerprint, i.category, i.severity, i.namespace, i.resource, i.container,
-	i.title, i.detail, i.detected_at, i.first_seen, i.count, i.resolved, i.evidence`
+	i.title, i.detail, i.detected_at, i.first_seen, i.count, i.resolved, i.evidence,
+	i.pre_existing`
 
 // Incident returns one record by id.
 func (s *SQLite) Incident(id string) (Record, error) {
@@ -302,7 +304,7 @@ func (s *SQLite) Stats(since time.Time) (Stats, error) {
 	stats := Stats{ByCategory: map[string]int{}, BySeverity: map[string]int{}}
 
 	rows, err := s.db.Query(`
-		SELECT category, severity, resolved, detected_at, first_seen
+		SELECT category, severity, resolved, detected_at, first_seen, pre_existing
 		FROM incidents WHERE detected_at >= ?`, since.UTC())
 	if err != nil {
 		return stats, fmt.Errorf("reading incident stats: %w", err)
@@ -315,10 +317,11 @@ func (s *SQLite) Stats(since time.Time) (Stats, error) {
 
 	for rows.Next() {
 		var category, severity string
-		var resolved int
+		var resolved, preExisting int
 		var detectedAt, firstSeen time.Time
 
-		if err := rows.Scan(&category, &severity, &resolved, &detectedAt, &firstSeen); err != nil {
+		if err := rows.Scan(&category, &severity, &resolved, &detectedAt, &firstSeen,
+			&preExisting); err != nil {
 			return stats, fmt.Errorf("scanning incident stats: %w", err)
 		}
 
@@ -330,6 +333,12 @@ func (s *SQLite) Stats(since time.Time) (Stats, error) {
 		}
 		if detectedAt.UTC().After(startOfToday) {
 			stats.IncidentsToday++
+		}
+		// A condition that was already true when kubelens started says nothing
+		// about how fast it detects; including it would report the age of the
+		// problem as the tool's latency.
+		if preExisting == 1 {
+			continue
 		}
 		if delta := detectedAt.Sub(firstSeen); delta > 0 {
 			detectionTotal += delta
@@ -361,14 +370,14 @@ type rowScanner interface {
 func scanIncident(row rowScanner) (Record, error) {
 	var record Record
 	var category, severity, evidence string
-	var resolved int
+	var resolved, preExisting int
 
 	err := row.Scan(
 		&record.Incident.ID, &record.Incident.Fingerprint, &category, &severity,
 		&record.Incident.Namespace, &record.Incident.Resource, &record.Incident.Container,
 		&record.Incident.Title, &record.Incident.Detail,
 		&record.Incident.DetectedAt, &record.Incident.FirstSeen,
-		&record.Incident.Count, &resolved, &evidence)
+		&record.Incident.Count, &resolved, &evidence, &preExisting)
 	if err != nil {
 		return Record{}, err
 	}
@@ -376,6 +385,7 @@ func scanIncident(row rowScanner) (Record, error) {
 	record.Incident.Category = detector.Category(category)
 	record.Incident.Severity = detector.Severity(severity)
 	record.Incident.Resolved = resolved == 1
+	record.Incident.PreExisting = preExisting == 1
 	record.Incident.DetectedAt = record.Incident.DetectedAt.UTC()
 	record.Incident.FirstSeen = record.Incident.FirstSeen.UTC()
 

@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/mdryaaan/kubelens/internal/watcher"
 )
 
@@ -80,7 +82,7 @@ func (r *CrashLoopRule) Detect(event watcher.WatchEvent) *Incident {
 					"failing rather than waiting out a backoff from an already-fixed problem. "+
 					"Kubelet reported: %s",
 				status.Name, status.RestartCount, exit, messageOr(waiting.Message, "no message")),
-			FirstSeen: podTimestamp(event),
+			FirstSeen: lastCrashAt(status, event),
 		}
 	}
 
@@ -121,6 +123,17 @@ func messageOr(message, fallback string) string {
 		return fallback
 	}
 	return message
+}
+
+// lastCrashAt is when the container most recently exited, which is when this
+// crash loop's current cycle began. The pod's start time would date the
+// incident to whenever the workload was first scheduled, which can be hours
+// earlier and makes detection latency meaningless.
+func lastCrashAt(status *corev1.ContainerStatus, event watcher.WatchEvent) time.Time {
+	if terminated := lastTerminated(status); terminated != nil && !terminated.FinishedAt.IsZero() {
+		return terminated.FinishedAt.Time
+	}
+	return podTimestamp(event)
 }
 
 // podTimestamp prefers the pod's start time, so an incident is dated by when

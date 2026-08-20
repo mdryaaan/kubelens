@@ -61,8 +61,11 @@ func (r *OOMKilledRule) Detect(event watcher.WatchEvent) *Incident {
 					"The container has %s. The kernel terminated the process because it "+
 					"requested more memory than the cgroup allowed.",
 				status.Name, terminated.ExitCode, status.RestartCount, limit),
-			FirstSeen:  terminated.StartedAt.Time,
-			DetectedAt: terminated.FinishedAt.Time,
+			// When the condition began, which for an OOM kill is the moment
+			// the kernel terminated the process — not when the container
+			// started. DetectedAt is stamped by the engine when it sees this,
+			// so the gap between them is genuine detection latency.
+			FirstSeen: terminated.FinishedAt.Time,
 		}
 	}
 

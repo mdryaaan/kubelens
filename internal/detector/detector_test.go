@@ -399,3 +399,59 @@ func stringsContains(h, n string) bool {
 	}
 	return false
 }
+
+// Detection latency is only meaningful for conditions kubelens saw begin.
+func TestEngineMarksPreExistingConditions(t *testing.T) {
+	opts := DefaultOptions()
+	opts.Now = fixedNow
+	engine := NewEngine(opts)
+
+	// The container was killed a minute before this engine started watching.
+	old := withTerminated(basePod("payment-api-old"), "OOMKilled", 137, 1)
+	old.Status.ContainerStatuses[0].LastTerminationState.Terminated.FinishedAt =
+		metav1.NewTime(testClock.Add(-time.Minute))
+
+	got := engine.Process(podEvent(old))
+	if len(got) != 1 {
+		t.Fatalf("got %d incidents, want 1", len(got))
+	}
+	if !got[0].PreExisting {
+		t.Error("a condition that began before the engine started was not marked pre-existing")
+	}
+
+	// One that begins after kubelens is watching is not.
+	fresh := withTerminated(basePod("payment-api-fresh"), "OOMKilled", 137, 1)
+	fresh.Status.ContainerStatuses[0].LastTerminationState.Terminated.FinishedAt =
+		metav1.NewTime(testClock.Add(time.Second))
+
+	got = engine.Process(podEvent(fresh))
+	if len(got) != 1 {
+		t.Fatalf("got %d incidents, want 1", len(got))
+	}
+	if got[0].PreExisting {
+		t.Error("a condition that began after start was marked pre-existing")
+	}
+}
+
+// The crash loop's current cycle began at the last exit, not at pod start —
+// otherwise detection latency measures how long the workload has been running.
+func TestCrashLoopDatesTheIncidentFromTheLastExit(t *testing.T) {
+	pod := withWaiting(basePod("auth-service-1"), "CrashLoopBackOff", "back-off", 3)
+	crashedAt := testClock.Add(-45 * time.Second)
+	pod.Status.ContainerStatuses[0].LastTerminationState = corev1.ContainerState{
+		Terminated: &corev1.ContainerStateTerminated{
+			Reason:     "Error",
+			ExitCode:   1,
+			StartedAt:  metav1.NewTime(testClock.Add(-5 * time.Minute)),
+			FinishedAt: metav1.NewTime(crashedAt),
+		},
+	}
+
+	got := NewCrashLoopRule().Detect(podEvent(pod))
+	if got == nil {
+		t.Fatal("no incident")
+	}
+	if !got.FirstSeen.Equal(crashedAt) {
+		t.Errorf("first seen = %v, want the last exit at %v", got.FirstSeen, crashedAt)
+	}
+}
