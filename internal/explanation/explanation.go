@@ -101,6 +101,12 @@ func (e *Engine) Explain(ctx context.Context, bundle kcontext.IncidentContext) (
 
 	if e.provider.Name() == llm.ProviderOffline {
 		out.Disclaimer = llm.OfflineDisclaimer
+		// The provider prefixes its own prose so that its output is
+		// self-labelling wherever it is used directly. Once the disclaimer is
+		// carried in a field of its own — which every renderer is tested to
+		// display — repeating it inside the summary is only noise, and reads
+		// as a tool shouting.
+		out.Summary = strings.TrimSpace(strings.TrimPrefix(out.Summary, llm.OfflineDisclaimer))
 	}
 
 	return out, nil

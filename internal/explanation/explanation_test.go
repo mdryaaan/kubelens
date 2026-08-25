@@ -207,3 +207,23 @@ func TestOfflineProviderAttachesItsDisclaimer(t *testing.T) {
 		t.Errorf("a real provider was given a baseline disclaimer: %q", real.Disclaimer)
 	}
 }
+
+// The disclaimer travels in a field of its own, which every renderer displays.
+// Repeating it inside the prose reads as a tool shouting.
+func TestBaselineDisclaimerIsNotDuplicatedInTheSummary(t *testing.T) {
+	got, err := NewEngine(llm.NewOffline()).Explain(context.Background(), sampleBundle())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Disclaimer == "" {
+		t.Fatal("the disclaimer field is empty")
+	}
+	if strings.Contains(got.Summary, "not by an LLM") {
+		t.Errorf("the disclaimer is repeated inside the summary:\n%s", got.Summary)
+	}
+	// And the prose still has to say something after the prefix is removed.
+	if len(strings.TrimSpace(got.Summary)) < 40 {
+		t.Errorf("stripping the prefix left almost no explanation: %q", got.Summary)
+	}
+}
