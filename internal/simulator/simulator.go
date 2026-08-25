@@ -142,6 +142,14 @@ func (s *Simulator) Run(ctx context.Context, out chan<- watcher.WatchEvent) erro
 	}
 }
 
+// maxUnhealthyRatio is how much of the simulated cluster may be broken at once.
+//
+// Past this point the demo stops being a demonstration and becomes a wall of
+// red: a cluster where everything is failing tells a viewer nothing about which
+// failure matters. Real clusters also get fixed, so above the threshold the
+// simulator recovers a workload instead of breaking another one.
+const maxUnhealthyRatio = 0.3
+
 // InjectNext applies the next failure and returns the events it produced,
 // without needing the run loop. Used by tests and by the eval harness.
 func (s *Simulator) InjectNext() []watcher.WatchEvent {
@@ -154,6 +162,13 @@ func (s *Simulator) InjectNext() []watcher.WatchEvent {
 	}
 
 	now := s.opts.Now()
+
+	// Recovery competes with failure rather than only happening when nothing
+	// can break, so a long-running demo settles into a cluster with a handful
+	// of live problems instead of drifting to total collapse.
+	if s.tooMuchIsBroken() {
+		return s.recoverOne(now)
+	}
 
 	// Each category is tried in turn; if none can be applied — every candidate
 	// pod is already broken — the cluster is healed and the cycle restarts,
@@ -176,6 +191,52 @@ func (s *Simulator) InjectNext() []watcher.WatchEvent {
 	}
 
 	s.heal(now)
+	return nil
+}
+
+// tooMuchIsBroken reports whether the cluster has degraded past the point of
+// being a legible demonstration.
+func (s *Simulator) tooMuchIsBroken() bool {
+	total := s.cluster.PodCount()
+	if total == 0 {
+		return false
+	}
+	return float64(s.cluster.Unhealthy())/float64(total) > maxUnhealthyRatio
+}
+
+// recoverOne returns a single broken pod to health and emits the update.
+//
+// Recovering one at a time rather than all at once keeps the dashboard's
+// unhealthy count moving in both directions, which is what a real cluster
+// looks like and what makes the health chart worth plotting.
+func (s *Simulator) recoverOne(now time.Time) []watcher.WatchEvent {
+	for _, pod := range s.cluster.Pods {
+		if !podIsBroken(pod) {
+			continue
+		}
+
+		w, ok := s.cluster.Workload(pod.Name)
+		if !ok {
+			continue
+		}
+
+		healPod(pod, w, now)
+		s.logs.Set(pod.Namespace, pod.Name, w.container, healthyLines(s.rng, w, now))
+		return []watcher.WatchEvent{podEventFor(pod, now)}
+	}
+
+	// Nothing left to recover: the deployments must be what is unhealthy.
+	for _, deploy := range s.cluster.Deployments {
+		if progressing := deploymentProgressing(deploy); progressing != nil {
+			healDeployment(deploy, now)
+			return []watcher.WatchEvent{{
+				Kind: watcher.KindDeployment, Type: watcher.Modified,
+				Namespace: deploy.Namespace, Name: deploy.Name,
+				Timestamp: now, Deploy: deploy.DeepCopy(),
+			}}
+		}
+	}
+
 	return nil
 }
 

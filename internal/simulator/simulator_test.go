@@ -327,3 +327,82 @@ func TestFailuresWithNoOutputClearTheLog(t *testing.T) {
 		})
 	}
 }
+
+// A cluster where everything is failing tells a viewer nothing about which
+// failure matters, so the simulator recovers workloads once it degrades past a
+// legible fraction.
+func TestSimulatorKeepsTheClusterMostlyHealthy(t *testing.T) {
+	sim := New(Options{Seed: 8, Now: func() time.Time { return simClock }})
+
+	worst := 0.0
+	for i := 0; i < 300; i++ {
+		sim.InjectNext()
+
+		ratio := float64(sim.Cluster().Unhealthy()) / float64(sim.Cluster().PodCount())
+		if ratio > worst {
+			worst = ratio
+		}
+	}
+
+	// The threshold is the trigger, not a hard cap — one more failure can land
+	// before recovery kicks in — so a little headroom is expected.
+	if worst > maxUnhealthyRatio+0.2 {
+		t.Errorf("the cluster degraded to %.0f%% unhealthy, past the %.0f%% target",
+			worst*100, maxUnhealthyRatio*100)
+	}
+	if sim.Cluster().Unhealthy() == 0 {
+		t.Error("nothing is broken after 300 injections; the demo would be empty")
+	}
+}
+
+// Recovery has to produce watch events, or the dashboard shows a cluster that
+// never gets better.
+func TestRecoveryEmitsEvents(t *testing.T) {
+	sim := New(Options{Seed: 4, Now: func() time.Time { return simClock }})
+
+	for i := 0; i < 200; i++ {
+		sim.InjectNext()
+	}
+
+	before := sim.Cluster().Unhealthy()
+	var recovered bool
+	for i := 0; i < 20 && !recovered; i++ {
+		if events := sim.InjectNext(); len(events) > 0 && sim.Cluster().Unhealthy() < before {
+			recovered = true
+		}
+		before = sim.Cluster().Unhealthy()
+	}
+
+	if !recovered {
+		t.Error("the unhealthy count never went down")
+	}
+}
+
+// A container that crashed six times and then stabilised still restarted six
+// times; erasing that would remove history the dashboard legitimately shows.
+func TestRecoveryKeepsTheRestartCount(t *testing.T) {
+	sim := New(Options{
+		Seed: 6, Now: func() time.Time { return simClock },
+		Categories: []detector.Category{detector.CrashLoopBackOff},
+	})
+
+	events := sim.InjectNext()
+	if len(events) == 0 {
+		t.Fatal("nothing was injected")
+	}
+	pod := sim.Cluster().Pod(events[0].Name)
+	restarts := pod.Status.ContainerStatuses[0].RestartCount
+	if restarts == 0 {
+		t.Fatal("the injected crash loop recorded no restarts")
+	}
+
+	w, _ := sim.Cluster().Workload(pod.Name)
+	healPod(pod, w, simClock)
+
+	if got := pod.Status.ContainerStatuses[0].RestartCount; got != restarts {
+		t.Errorf("restart count = %d after recovery, want it preserved at %d", got, restarts)
+	}
+	if podIsBroken(pod) {
+		t.Error("the pod is still reported as broken after recovery")
+	}
+}

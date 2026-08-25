@@ -364,3 +364,70 @@ func setDeploymentCondition(deploy *appsv1.Deployment, kind appsv1.DeploymentCon
 		LastTransitionTime: metav1.NewTime(now), LastUpdateTime: metav1.NewTime(now),
 	})
 }
+
+// podIsBroken reports whether a pod is in any state the detectors would flag.
+func podIsBroken(pod *corev1.Pod) bool {
+	if pod.Status.Phase != corev1.PodRunning {
+		return true
+	}
+	for i := range pod.Status.ContainerStatuses {
+		status := &pod.Status.ContainerStatuses[i]
+		if status.State.Waiting != nil || !status.Ready {
+			return true
+		}
+	}
+	return len(pod.Status.ContainerStatuses) == 0
+}
+
+// healPod returns a pod to a healthy Running state.
+//
+// The restart count is kept: a container that crashed six times and then
+// stabilised still restarted six times, and zeroing it would erase history the
+// dashboard legitimately shows.
+func healPod(pod *corev1.Pod, w workload, now time.Time) {
+	started := metav1.NewTime(now)
+
+	pod.Spec.Containers[0].Image = w.image
+	pod.Status.Phase = corev1.PodRunning
+	pod.Status.StartTime = &started
+
+	restarts := int32(0)
+	if len(pod.Status.ContainerStatuses) > 0 {
+		restarts = pod.Status.ContainerStatuses[0].RestartCount
+	}
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+		Name: w.container, Image: w.image, Ready: true, RestartCount: restarts,
+		State: corev1.ContainerState{Running: &corev1.ContainerStateRunning{StartedAt: started}},
+	}}
+
+	if pod.Spec.NodeName == "" {
+		pod.Spec.NodeName = nodeNames[0]
+	}
+	setPodCondition(pod, corev1.PodScheduled, corev1.ConditionTrue, "", "")
+	setPodCondition(pod, corev1.PodReady, corev1.ConditionTrue, "", "")
+}
+
+// deploymentProgressing returns a stalled Progressing condition, if any.
+func deploymentProgressing(deploy *appsv1.Deployment) *appsv1.DeploymentCondition {
+	for i := range deploy.Status.Conditions {
+		condition := &deploy.Status.Conditions[i]
+		if condition.Type == appsv1.DeploymentProgressing && condition.Status == corev1.ConditionFalse {
+			return condition
+		}
+	}
+	return nil
+}
+
+// healDeployment completes a stalled rollout.
+func healDeployment(deploy *appsv1.Deployment, now time.Time) {
+	desired := int32(1)
+	if deploy.Spec.Replicas != nil {
+		desired = *deploy.Spec.Replicas
+	}
+
+	deploy.Status.ReadyReplicas = desired
+	deploy.Status.UpdatedReplicas = desired
+	deploy.Status.AvailableReplicas = desired
+	setDeploymentCondition(deploy, appsv1.DeploymentProgressing, corev1.ConditionTrue,
+		"NewReplicaSetAvailable", "ReplicaSet has successfully progressed.", now)
+}
