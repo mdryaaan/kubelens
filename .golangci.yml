@@ -1,0 +1,44 @@
+run:
+  timeout: 5m
+  go: '1.22'
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosimple
+    - misspell
+    - revive
+    - gosec
+    - bodyclose
+    - unconvert
+    - goconst
+    - nakedret
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+  goconst:
+    min-occurrences: 4
+  gosec:
+    excludes:
+      # The simulator seeds math/rand deliberately: determinism is the point.
+      - G404
+
+issues:
+  exclude-rules:
+    # Test helpers legitimately ignore errors while building fixtures, and
+    # requiring a check on each one makes the tests harder to read without
+    # making them more correct.
+    - path: _test\.go
+      linters:
+        - errcheck
+        - goconst
+        - gosec
+  max-issues-per-linter: 0
+  max-same-issues: 0

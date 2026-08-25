@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Verify the module is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Check formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
+
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1 >> "$GITHUB_STEP_SUMMARY"
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version: '1.22'
+      - uses: golangci/golangci-lint-action@971e284b6050e8a5849b72094c50ab08da042db8 # v6.1.1
+        with:
+          version: v1.61.0
+
+  eval:
+    name: Evaluation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version: '1.22'
+
+      - name: Build
+        run: go build -o bin/kubelens .
+
+      # The corpus is a regression suite for the pipeline, so a drop means
+      # something changed behaviour rather than that clusters got harder.
+      - name: Score the labelled corpus
+        run: ./bin/kubelens eval --provider offline --min-score 0.9 --format markdown >> "$GITHUB_STEP_SUMMARY"
+
+  smoke:
+    name: Demo smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version: '1.22'
+
+      - name: Build
+        run: go build -o bin/kubelens .
+
+      # The demo is what most people run first. A unit test cannot catch the
+      # pipeline failing to wire together, so the whole thing is started and
+      # the API is asked whether it actually detected anything.
+      - name: Run the demo and check it detects incidents
+        run: |
+          set -euo pipefail
+          ./bin/kubelens serve --demo --db /tmp/ci.db --demo-interval 1s \
+            --explain --provider offline --addr 127.0.0.1:8080 &
+          server=$!
+          trap 'kill $server 2>/dev/null || true' EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8080/api/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          sleep 12
+          body="$(curl -sf http://127.0.0.1:8080/api/incidents)"
+          total="$(echo "$body" | grep -c '"rule_category"' || true)"
+
+          echo "$body" | head -c 400
+          if [ "$total" -lt 1 ]; then
+            echo "the demo produced no explained incidents"
+            exit 1
+          fi
+          echo "demo produced $total explained incident(s)"
+
+  web:
+    name: Dashboard
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
