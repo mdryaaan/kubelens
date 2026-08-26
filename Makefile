@@ -36,10 +36,14 @@ build-web:
 install:
 	$(GO) install -ldflags '$(LDFLAGS)' .
 
+# `go test ./...` walks into web/node_modules once a contributor has run npm
+# install, because a dependency vendors a Go package of its own.
+PKGS = $(shell $(GO) list ./... | grep -v '/web/')
+
 ## test: run the Go test suite with coverage
 .PHONY: test
 test:
-	$(GO) test ./... -race -coverprofile=coverage.out -covermode=atomic
+	$(GO) test $(PKGS) -race -coverprofile=coverage.out -covermode=atomic
 	@$(GO) tool cover -func=coverage.out | tail -1
 
 ## cover: write the HTML coverage report
@@ -77,7 +81,7 @@ eval-md: build
 ## lint: run go vet and golangci-lint when it is installed
 .PHONY: lint
 lint:
-	$(GO) vet ./...
+	$(GO) vet $(PKGS)
 	@command -v golangci-lint >/dev/null 2>&1 \
 		&& golangci-lint run ./... \
 		|| echo "golangci-lint not installed; ran go vet only"
