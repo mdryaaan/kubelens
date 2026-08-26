@@ -32,8 +32,10 @@ func TestDefaultSeedIsFixed(t *testing.T) {
 	if Default().DemoSeed == 0 {
 		t.Error("the demo seed is unset, so the simulator would not be reproducible")
 	}
-	if Default().DemoSeed != Default().DemoSeed {
-		t.Error("the default seed is not stable")
+	first, second := Default(), Default()
+	if first.DemoSeed != second.DemoSeed {
+		t.Errorf("two Default() calls disagree on the seed: %d vs %d",
+			first.DemoSeed, second.DemoSeed)
 	}
 }
 

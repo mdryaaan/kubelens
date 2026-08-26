@@ -67,7 +67,7 @@ func (r *ProbeFailureRule) Detect(event watcher.WatchEvent) *Incident {
 		Namespace: event.Namespace,
 		Resource:  "pod/" + event.Name,
 		Container: containerFromFieldPath(source.InvolvedObject.FieldPath),
-		Title:     fmt.Sprintf("%s probe failing for %s", strings.Title(kind), event.Name),
+		Title:     fmt.Sprintf("%s probe failing for %s", capitalise(kind), event.Name),
 		Detail: fmt.Sprintf(
 			"%d Unhealthy warning(s) in the last %s for pod %q. The %s probe is not "+
 				"passing, so Kubernetes considers the pod unable to serve traffic. "+
@@ -115,6 +115,17 @@ func probeKind(message string) string {
 		return "readiness"
 	}
 	return "health"
+}
+
+// capitalise upper-cases the first letter of a known ASCII word.
+//
+// strings.Title is deprecated and applies Unicode word-boundary rules this does
+// not need: the input is always one of the lowercase probe kinds below.
+func capitalise(word string) string {
+	if word == "" {
+		return word
+	}
+	return strings.ToUpper(word[:1]) + word[1:]
 }
 
 // containerFromFieldPath pulls the container name out of a field path such as

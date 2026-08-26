@@ -198,7 +198,7 @@ func injectProbeFailure(rng *rand.Rand, cluster *Cluster, now time.Time) (inject
 		events = append(events, probeWarningEvent(pod, w, message, at))
 		records = append(records, kcontext.EventRecord{
 			Type: "Warning", Reason: "Unhealthy", Message: message,
-			Count: int32(i + 1), Timestamp: at,
+			Count: int32(i + 1), Timestamp: at, //nolint:gosec // i is bounded by the loop above
 		})
 	}
 

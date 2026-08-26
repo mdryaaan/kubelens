@@ -2,7 +2,6 @@ package detector
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mdryaaan/kubelens/internal/watcher"
 )
@@ -73,14 +72,4 @@ func (r *ImagePullRule) Detect(event watcher.WatchEvent) *Incident {
 	}
 
 	return nil
-}
-
-// registryHost extracts the registry a reference points at, which is what
-// decides whether a pull failure is an auth problem or a typo.
-func registryHost(image string) string {
-	parts := strings.SplitN(image, "/", 2)
-	if len(parts) == 2 && (strings.Contains(parts[0], ".") || strings.Contains(parts[0], ":")) {
-		return parts[0]
-	}
-	return "docker.io"
 }

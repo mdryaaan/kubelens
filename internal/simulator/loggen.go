@@ -7,7 +7,8 @@ import (
 	"time"
 )
 
-// logTemplate produces the output a container writes before a given failure.
+// The functions below produce the output a container writes before a given
+// failure.
 //
 // These are the most important strings in the simulator. The whole product
 // claims to explain failures from evidence, so the evidence has to be the kind
@@ -15,7 +16,6 @@ import (
 // with a stack trace, a Node process reporting a heap limit, a Go binary
 // panicking with goroutine state. Plausible-looking filler would make the demo
 // a lie, and would make the eval corpus measure nothing.
-type logTemplate func(rng *rand.Rand, w workload, at time.Time) []string
 
 // healthyLines are the steady-state lines a workload writes when nothing is
 // wrong. They matter because a failure log that contains only failure is not
